@@ -1,0 +1,75 @@
+---
+title: "DATA 599 - Survival Analysis HW4 - Charles Hanks"
+date: "Due: February 17, 2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(skimr)
+library(survival)
+library(survminer)
+library(fitdistrplus)
+```
+
+DATASET: genfan (preloaded with survival package)
+
+This dataset contains the failure time (hrs of service) of 70 diesel engine fans.
+
+Please complete the following:
+
+## A (20)
+Fit a KM curve to the data.  Make sure your graph has labels and a title.
+
+```{r}
+# your code below
+
+```
+
+## B (15)
+Fit an exponential distribution to the data (accounting for censoring).  What is the estimate for the rate parameter?
+
+```{r}
+
+```
+*ANSWER:* [FILL IN]
+
+## 3 (15)
+
+Fit the Weibull distribution to the data (accounting for censoring).  What are the estimates for the shape and scale parameters?
+
+```{r}
+
+```
+*ANSWER:* [FILL IN]
+
+## D (15)
+Fit the lognormal distribution to the data (accounting for censoring).  What are the estimates for the location and sd parameters?
+
+```{r}
+
+```
+*ANSWER:* [FILL IN]
+
+## E (20)
+Create side-by-side QQ plots for the 3 fits using cdfcompcens.
+
+```{r}
+
+```
+*ANSWER:* [FILL IN]
+
+### F (10)
+Which distribution best fits the data?  Justify your answer.
+
+*ANSWER:* [FILL IN]
+
+### F
+Suppose the stated warranty for the fans is 1000 hours.  Using your distribution fit, what's the probability of a given diesel fan failing in warranty?
+
+```{r}
+
+```
+*ANSWER:* [FILL IN]
