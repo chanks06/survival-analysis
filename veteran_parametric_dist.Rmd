@@ -1,0 +1,69 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+setwd("/Users/charleshanks/Desktop/MSDS/SPRING_23/SA")
+```
+
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(survival)
+library(survminer)
+library(fitdistrplus)
+
+#regression model for the survival time vs. treatment of small cell lung cancer patients
+#ds = veteran
+
+unique(veteran$celltype)
+
+smallCell = veteran %>% filter(celltype == "smallcell" ) %>%
+  mutate(trt = factor(trt))
+
+smallCell= smallCell %>%
+    mutate(left=time,
+           right=ifelse(status==1,time,NA)) %>% 
+                dplyr::select(trt, time, status, left, right)
+
+
+
+survObject = Surv(smallCell$left,smallCell$right,type="interval2")
+weibullMod=survreg(survObject~smallCell$trt)
+summary(weibullMod)
+
+
+qweibull(0.50,shape=0.98, scale = exp(4.51))
+
+
+```
+
+
+```{r}
+#fitting a stratified Weibull model with cell types as the strata and treatment as the x
+
+veteran = veteran %>% 
+  mutate(trt = factor(trt), 
+       left=time,
+       right=ifelse(status==1,time,NA)) %>% 
+                dplyr::select(trt, celltype, time, status, left, right)
+
+
+survObject = Surv(veteran$left,veteran$right,type="interval2")
+
+dists = c("weibull", "gaussian", "logistic", "lognormal", "loglogistic")
+
+mod_list = list()
+
+for(i in dists){
+  mod=survreg(survObject~ veteran$trt + strata(veteran$celltype), dist = i)
+  mod_list[[i]] = AIC(mod)
+}
+
+mod_list
+```
+
