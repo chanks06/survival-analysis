@@ -24,7 +24,14 @@ Please complete the following:
 Fit a KM curve to the data.  Make sure your graph has labels and a title.
 
 ```{r}
-# your code below
+
+genfan
+km.genfan = survfit(Surv(genfan$hours,genfan$status)~1)
+summary(km.genfan)
+ggsurvplot(fit = km.genfan, data = genfan, palete = "forestgreen", risk.table = F, conf.int = T) + 
+  labs(title = "Survival Curve for Diesel Engine Fans", 
+       x = "Time (Hours)",
+       y = "Survival Probability") 
 
 ```
 
@@ -32,44 +39,66 @@ Fit a KM curve to the data.  Make sure your graph has labels and a title.
 Fit an exponential distribution to the data (accounting for censoring).  What is the estimate for the rate parameter?
 
 ```{r}
+genfan = genfan %>% mutate(left = hours, 
+                           right = ifelse(status==1, hours, NA))
+
+interval.genfan = genfan %>% dplyr::select(left,right)
+
+exp.fit = fitdistcens(data.frame(interval.genfan),"weibull",fix.arg=list(shape=1))
+summary(exp.fit)
+
 
 ```
-*ANSWER:* [FILL IN]
+*ANSWER:* Estimate for rate parameter is 16670.93
 
 ## 3 (15)
 
 Fit the Weibull distribution to the data (accounting for censoring).  What are the estimates for the shape and scale parameters?
 
 ```{r}
-
+weibull.fit = fitdistcens(data.frame(interval.genfan), "weibull")
+summary(weibull.fit)
 ```
-*ANSWER:* [FILL IN]
+*ANSWER:* Estimate for shape parameter: 1.058, estimate for scale: 26301.309
 
 ## D (15)
 Fit the lognormal distribution to the data (accounting for censoring).  What are the estimates for the location and sd parameters?
 
 ```{r}
-
+lnorm.fit = fitdistcens(data.frame(interval.genfan), "lnorm")
+summary(lnorm.fit)
 ```
-*ANSWER:* [FILL IN]
+*ANSWER:* location estimate: 10.146, sd estiamte: 1.681. 
 
 ## E (20)
 Create side-by-side QQ plots for the 3 fits using cdfcompcens.
 
 ```{r}
-
+qqcompcens(list(exp.fit,weibull.fit,lnorm.fit),
+            legendtext=c("Exponential","Weibull","Lognormal"),
+            xlab="Failure Time (Hours)",
+            plotstyle = "ggplot")
 ```
 *ANSWER:* [FILL IN]
 
 ### F (10)
+```{r}
+aic = c(exp.fit$aic, weibull.fit$aic, lnorm.fit$aic)
+fits = c("exponential", "weibull", "lognormal")
+
+cbind(data.frame(aic), fits)
+
+```
+
 Which distribution best fits the data?  Justify your answer.
 
-*ANSWER:* [FILL IN]
+*ANSWER:* The lognormal distribution is the best fit because it has the lowest AIC. Also one can see in the QQ plot above that the lognormal data deviates the least from the 45 degree line. 
 
 ### F
 Suppose the stated warranty for the fans is 1000 hours.  Using your distribution fit, what's the probability of a given diesel fan failing in warranty?
 
 ```{r}
+plnorm(1000, 10.145528, 1.680757, lower.tail = TRUE)
 
 ```
-*ANSWER:* [FILL IN]
+*ANSWER:* The probability of a given diesel fan failing in warranty is .027.
