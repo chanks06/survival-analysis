@@ -24,11 +24,9 @@ Please complete the following:
 Fit a KM curve to the data.  Make sure your graph has labels and a title.
 
 ```{r}
-
-genfan
 km.genfan = survfit(Surv(genfan$hours,genfan$status)~1)
 summary(km.genfan)
-ggsurvplot(fit = km.genfan, data = genfan, palete = "forestgreen", risk.table = F, conf.int = T) + 
+ggsurvplot(fit = km.genfan, data = genfan, palette = "forestgreen", risk.table = F, conf.int = T) + 
   labs(title = "Survival Curve for Diesel Engine Fans", 
        x = "Time (Hours)",
        y = "Survival Probability") 
@@ -47,9 +45,11 @@ interval.genfan = genfan %>% dplyr::select(left,right)
 exp.fit = fitdistcens(data.frame(interval.genfan),"weibull",fix.arg=list(shape=1))
 summary(exp.fit)
 
+#rate of exponential distribution is equal to 1 / scale of weibull distribution: 
+rate = 1/as.numeric(unlist(exp.fit[1]))
 
 ```
-*ANSWER:* Estimate for rate parameter is 16670.93
+*ANSWER:* Estimate for rate parameter is 5.998467e-05
 
 ## 3 (15)
 
@@ -68,7 +68,7 @@ Fit the lognormal distribution to the data (accounting for censoring).  What are
 lnorm.fit = fitdistcens(data.frame(interval.genfan), "lnorm")
 summary(lnorm.fit)
 ```
-*ANSWER:* location estimate: 10.146, sd estiamte: 1.681. 
+*ANSWER:* location estimate: 10.146, sd estimate: 1.681. 
 
 ## E (20)
 Create side-by-side QQ plots for the 3 fits using cdfcompcens.
@@ -86,7 +86,7 @@ qqcompcens(list(exp.fit,weibull.fit,lnorm.fit),
 aic = c(exp.fit$aic, weibull.fit$aic, lnorm.fit$aic)
 fits = c("exponential", "weibull", "lognormal")
 
-cbind(data.frame(aic), fits)
+cbind(fits,data.frame(aic))
 
 ```
 
@@ -101,4 +101,4 @@ Suppose the stated warranty for the fans is 1000 hours.  Using your distribution
 plnorm(1000, 10.145528, 1.680757, lower.tail = TRUE)
 
 ```
-*ANSWER:* The probability of a given diesel fan failing in warranty is .027.
+*ANSWER:* The probability of a given diesel fan failing in warranty is .027. There is about a 3% chance that the diesel fan will fail within warranty. 

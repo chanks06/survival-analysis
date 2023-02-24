@@ -1,0 +1,139 @@
+---
+title: "DATA 599 - Survival Analysis HW5 - Charles Hanks"
+date: "Due: February 24, 2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/charleshanks/Desktop/MSDS/SPRING_23/SA/datasets')
+
+
+library(tidyverse)
+library(skimr)
+library(survival)
+library(survminer)
+library(fitdistrplus)
+```
+# DATASET: pharmacoSmoking-asaur.txt
+Leveraged from the Applied Survival Analysis Using R book, this data is from a randomized trial of triple therapy vs. patch for smoking cessation.  Variables ttr and relapse are time to relapse (days) and whether or not a relapse occurred, respectively (1=relapse occurred, 0=no relapsed occurred.)  
+
+Please read in the dataset and do the following:
+
+## A
+Plot KM survival curves for each treatment group.  Make sure your plot has reference lines for the median.
+
+```{r}
+#readin' 'n' wranglin' 
+
+ds = read_csv('pharmacoSmoking-asaur.txt')
+head(ds)
+
+ds = ds %>% 
+  rename(sex = gender) %>% 
+  mutate(grp = factor(grp), 
+         sex = factor(sex))
+
+ ds = ds %>%
+    mutate(left= ifelse(ttr == 0,ttr+.001,ttr),
+           right= ifelse(relapse == 1,left, NA)) %>% 
+  dplyr::select(id, ttr, relapse, age, grp,sex, left, right)
+
+survObject=Surv(ds$left,ds$right,type="interval2")
+
+#plottin'
+
+km.smoking = survfit(survObject~ds$grp)
+
+summary(km.smoking) 
+
+ggsurvplot(fit = km.smoking, data = ds, risk.table = F, conf.int = F, surv.median.line = "hv" ) + 
+  labs(title = "Effectiveness of Smoking Cessation Treatment", 
+       x = "Time (days)",
+       y = "Smoking Cessation Probability") 
+
+```
+
+## B
+Plot KM survival curves for each treatment group, stratifying by sex. Use linetype="strata" to create separate curves for each stratum.  Make sure your plot has reference lines for the median.
+
+```{r}
+km.smoking_strata.sex = survfit(survObject~ds$grp + strata(ds$sex))
+
+ggsurvplot(fit = km.smoking_strata.sex, data = ds, risk.table = F, conf.int = F, linetype = "strata", surv.median.line = "hv", legend = "right" )  + 
+  labs(title = "Effectiveness of Smoking Cessation Treatment", 
+       x = "Time (days)",
+       y = "Smoking Cessation Probability") 
+
+#spaghetti
+```
+
+## C
+For each treatment, does your plot suggest a difference in survival times between males and females?  Explain.
+
+*ANSWER:* Yes, based on the survival curves above, it appears that female patients with patch and combination treatments both have a lower survival probability of quitting smoking than the male patient with patch and combination treatment. The plot shows that the median time to relapse for females is lower than for males undergoing both treatment types. 
+
+## D
+Fit a Weibull regression model for time to relapse as a function of age, sex, and the treatment.  Name your model "myMod".
+
+```{r}
+myMod = survreg(survObject~ds$age + ds$sex +ds$grp, dist = "weibull")
+summary(myMod)
+```
+
+## E
+Create residual diagnostic plots for `myMod`.  (You should have 3 plots--one for each x.)  Is your model valid?  Why or why not?
+
+```{r}
+# plot 1: x = grp (treatment type)
+devresids=residuals(myMod,type="deviance")
+
+ds %>% mutate(devresids=devresids) %>% ggplot(aes(y=devresids,x=grp,fill=grp)) +
+geom_boxplot() + geom_hline(yintercept = 0,linetype="dotted")
+
+# plot 2: x = age 
+tibble(resids=devresids,age=ds$age) %>%
+  ggplot(aes(x=age,y=devresids)) + geom_point() +
+  geom_smooth(method="loess") + geom_hline(yintercept=0,linetype="dotted")
+
+#plot 3 x = sex 
+ds %>% ggplot(aes(y = devresids, x = sex, fill = sex)) + 
+  geom_boxplot() + geom_hline(yintercept = 0, linetype = "dotted")
+```
+
+*ANSWER:* The deviance residual plot for age is concerning. While the residuals are roughly centered around the 0 axis, the loess curve is parabolic, which means there is non-constant variance among the residuals. There may be another variable not accounted for in our model. 
+
+## F
+What are the alpha and beta parameters for a 25-year old male smoker who is being given the patch only?
+
+mu = intercept + b_1*x_1 + b_2*x_2 + b_3*x_3
+
+```{r}
+summary(myMod)
+
+intercept = 2.5103 
+b_1 = 0.0577
+b_2 = 0.3116
+b_3 = -1.4330
+
+mu = intercept + b_1*25 + b_2*1 + b_3*1
+
+alpha = exp(mu)
+alpha 
+
+beta = 1/myMod$scale
+
+```
+
+*ANSWER:* alpha = 16.969, beta = 0.377
+
+## G
+
+Based on your answer in part F, what is the probability of a 25-year old male smoker who is being given the patch only relapsing by 60 days?
+
+```{r}
+pweibull(60, beta, alpha, lower.tail = TRUE)
+```
+
+*ANSWER:* The probability of a 25 year old male smoker who is given only the patch relapsing within 60 days is .80.
+
