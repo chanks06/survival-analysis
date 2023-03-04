@@ -2,8 +2,8 @@
 title: "DATA 599 - Survival Analysis HW6 - Charles Hanks"
 date: 'Due: March 3, 2023'
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -43,13 +43,10 @@ For each temperature level, fit a Weibull distribution to the failure time data.
 
 ```{r}
 
-
-#creating left and right columns for ds 
 ds = ds %>% 
   mutate(left = failTime, 
          right = ifelse(status == 0, NA, failTime))
 
-#temp C = 85 
 interval.85 = ds %>% filter(tempC == 85) %>% 
                     dplyr::select(left, right)
 
@@ -73,7 +70,6 @@ What are the $\beta$ values from your temperature-level distribution fits?
 summary(weibull.85)$estimate[1]
 summary(weibull.105)$estimate[1]
 summary(weibull.125)$estimate[1]
-
 ```
 
 
@@ -135,8 +131,6 @@ t125 = rweibull(1000, shape = 1/sigma, scale=exp(b0+b1*11605/(125+273.15)))
 Using your data in part I, create a data table which has the following variables: failure time, status (1=exact failure time, 0=right censored), temperature, and dataType(="model").  Name this table `modelds`.
 
 ```{r}
-unique(ds$arrTemp)
-
 modelds = data.frame(
             tempC = rep(c(85,105,125), each=1000),
             failTime = pmin(1000,c(t85,t105,t125))) %>% 
@@ -177,7 +171,7 @@ ggsurvplot(fit = km.newds, data = newds, palette = c("darkgreen","orange", "fore
 ## N
 Based on your plot, is your model a good match for the data?  Why or why not?]
 
-**ANSWER:** Based on the plot above, the model is a good match for the data because the model survival curves closely follow the survival curves produced by actual observations. 
+**ANSWER:** Based on the plot above, the model is a good match for the data because the model survival curves closely follow the survival curves produced by actual observations. The model data matches least with the observed data from the tempC = 105 strata. 
 
 ## O
 Assuming the use temperature condition is 25C, what is the acceleration factor if you run a reliability demonstration test at 65C?
@@ -186,7 +180,7 @@ Assuming the use temperature condition is 25C, what is the acceleration factor i
 ea = b1
 
 AF=exp(ea*(11605/(25+273.15) - 11605/(65+273.15)))
-
+AF
 ```
 
 **ANSWER:** Acceleration factor of test at 65 C : 50.345
