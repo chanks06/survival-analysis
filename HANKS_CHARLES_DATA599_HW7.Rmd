@@ -1,0 +1,157 @@
+---
+title: "DATA 599 - Survival Analysis HW7 - Charles Hanks"
+date: "Due: April 7, 2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/charleshanks/desktop/msds/spring_23/SA/datasets')
+
+library(tidyverse)
+library(skimr)
+library(survival)
+library(survminer)
+library(broom)
+library(autoplotly) 
+```
+
+** CHANGE YOUR NAME IN THE TITLE AND COMPLETE THE FOLLOWING: **
+
+# DATASET: pharmacoSmoking-asaur.txt
+
+This dataset, leveraged from *Applied Survival Analysis Using R* contains the following variables:
+
+- id  (patient ID number) 
+- ttr (Time in days until relapse)
+- relapse (Indicator of return to smoking) 
+- grp (Randomly assigned treatment group with levels combination or patchOnly)
+- age (Age in years at time of randomization)
+- gender (Female or Male) 
+- race (black, hispanic, white, or other)
+- employment (ft=full-time, pt=part-time, or other)
+- yearsSmoking (Number of years the patient had been a smoker)
+- levelSmoking (heavy or light)
+- ageGroup2 (Age group with levels 21-49 or 50+)
+- ageGroup4 (Age group with levels 21-34, 35-49, 50-64, or 65+)
+- priorAttempts (The number of prior attempts to quit smoking)
+- longestNoSmoke (The longest period of time, in days, that the patient has previously gone without smoking)
+
+The time to relapse (ttr) is the time variable of interest, and the relapse variable is the censoring variable.  Please read in the dataset and do the following:
+
+## A
+We need to do some wrangling.  Replace all 0's in the `ttr` column with 0.00001 (or a similarly tiny #).  Also, change the order of the race variable levels to {white, black, hispanic, other}.
+
+```{r}
+ds = read_csv('pharmacoSmoking-asaur.txt')
+
+ds = ds %>% mutate(ttr = ifelse(ttr == 0, 0.0001,ttr)) %>% 
+       mutate(race = factor(race, levels = c('white', 'black','hispanic','other')))
+
+```
+
+## B
+Create separate KM survival curves for the following relationships:
+- ttr vs. grp
+- ttr vs. gender
+- ttr vs. race
+- ttr vs. levelSmoking
+- ttr vs. ageGroup4
+
+```{r}
+#testing on first variable
+#km.grp = survfit(Surv(ds$ttr,ds$relapse) ~ ds$grp)
+#ggsurvplot(fit = km.grp, data = ds, risk.table = F, conf.int = T)
+
+#creating list of var names to iterate over
+vars = list('grp', 'gender', 'race', 'levelSmoking', 'ageGroup4')
+
+#iterating through list of vars to generate separate km curve for each km table
+for(var in vars){
+  str = paste0('survfit(Surv(ds$ttr,ds$relapse) ~ ds$', var,')')
+  km.fit = eval(parse(text = str))
+  print(ggsurvplot(fit = km.fit, data = ds, risk.table = F, conf.int = F) + labs(title = paste('Time to Relapse vs. ', var,sep ='')))
+}
+```
+
+## C
+Create a joint Weibull model with the variables in part A using `survreg`.  Name this model `weibullMod`.
+
+```{r}
+
+```
+
+## D
+Run `broom::tidy(weibullMod)` on the model.  Which variables are statistically significant?  (Hint: which variables have a p-value < 0.05?)
+
+```{r}
+
+```
+
+**ANSWER:** [fill in]
+
+## E
+Run a Cox proportional hazards model with the same variables in part A using `coxph`.  Name this model `coxMod`.
+
+```{r}
+
+```
+
+## F
+Run `summary(coxMod)`.  What is the interpretation of the grp (i.e. treatment) coefficient?  Hint: look at the coefficient in the exp(coef) column.  What does it mean to be >1?
+
+```{r}
+
+```
+
+**ANSWER:** [fill in]
+
+## G
+What is the interpretation of the smoking level coefficient?
+
+**ANSWER:** [fill in]
+
+## H
+We need to check the model diagnostics to verify that this model satisfies assumptions of the Cox PH model.  Uncomment and run the following code:
+
+```{r}
+# ggcoxdiagnostics(coxMod, type = "dfbeta", linear.predictions = FALSE, ggtheme = theme_minimal())
+
+# ggcoxdiagnostics(coxMod, type = "deviance",  linear.predictions = FALSE, ggtheme = theme_minimal())
+```
+
+Examine the plots.  Are there any influential points?
+
+**ANSWER:** [fill in]
+
+## I
+Run the following code to check the proportional hazards assumption:
+
+```{r}
+#coxZPH=cox.zph(coxMod)
+#ggcoxzph(coxZPH,font.x=10,font.y=10,font.main=12)
+```
+
+Based on the Schoenfeld residuals, is the proportional hazards assumption satisfied?
+
+**ANSWER:** [fill in]
+
+## J
+Using the variable names in the dataset, create a data frame for a 60yo Black male who is a light smoker.  One row should correspond to grp="patchOnly" and the second row should correspond to the combination treatment.  (Hint: expand.grid).  Name this data frame `newData`.
+
+```{r}
+
+```
+
+## K
+Uncomment and run the following code to create the survival tables for the cox PH curves:
+
+```{r}
+# coxSurvTables=survfit(coxMod, data = veteran, newdata = newData, conf.type = "none")
+```
+
+Then use the survfit object and `ggsurvplot` to create survival curves for a 60yo Black male.  There should be a curve for each treatment (patchOnly, combination).
+
+```{r}
+
+```
