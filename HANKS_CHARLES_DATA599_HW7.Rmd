@@ -78,23 +78,24 @@ for(var in vars){
 Create a joint Weibull model with the variables in part A using `survreg`.  Name this model `weibullMod`.
 
 ```{r}
-
+weibullMod = survreg(Surv(ttr,relapse)~ grp + gender + race + levelSmoking + ageGroup4, data = ds)
 ```
 
 ## D
 Run `broom::tidy(weibullMod)` on the model.  Which variables are statistically significant?  (Hint: which variables have a p-value < 0.05?)
 
 ```{r}
-
+broom::tidy(weibullMod)
 ```
 
-**ANSWER:** [fill in]
+**ANSWER:** The statistically significant variables are grp and ageGroup4. 
 
 ## E
 Run a Cox proportional hazards model with the same variables in part A using `coxph`.  Name this model `coxMod`.
 
 ```{r}
-
+coxMod=coxph(Surv(time,status)~trt + celltype + karno + diagtime + age + prior,data=veteran)
+coxMod = 
 ```
 
 ## F
