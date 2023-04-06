@@ -14,6 +14,7 @@ library(survival)
 library(survminer)
 library(broom)
 library(autoplotly) 
+options(scipen = 999)
 ```
 
 ** CHANGE YOUR NAME IN THE TITLE AND COMPLETE THE FOLLOWING: **
@@ -47,6 +48,7 @@ ds = read_csv('pharmacoSmoking-asaur.txt')
 
 ds = ds %>% mutate(ttr = ifelse(ttr == 0, 0.0001,ttr)) %>% 
        mutate(race = factor(race, levels = c('white', 'black','hispanic','other')))
+
 
 ```
 
@@ -94,53 +96,67 @@ broom::tidy(weibullMod)
 Run a Cox proportional hazards model with the same variables in part A using `coxph`.  Name this model `coxMod`.
 
 ```{r}
-coxMod=coxph(Surv(time,status)~trt + celltype + karno + diagtime + age + prior,data=veteran)
-coxMod = 
+coxMod=coxph(Surv(ttr,relapse)~grp + gender + race + levelSmoking + ageGroup4, data = ds)
+ 
 ```
 
 ## F
 Run `summary(coxMod)`.  What is the interpretation of the grp (i.e. treatment) coefficient?  Hint: look at the coefficient in the exp(coef) column.  What does it mean to be >1?
 
 ```{r}
-
+summary(coxMod)
 ```
 
-**ANSWER:** [fill in]
+**ANSWER:** Exp(coef) of grp is 1.81. We should interpret this coefficient for grppatchOnly as a hazard ratio, exp(B_1). We can say that that hazard increases by a factor of 1.81 when the treatment for is patch only. In other words, the hazard increases by 81% for patch only compared to the baseline combination treatment.
 
 ## G
 What is the interpretation of the smoking level coefficient?
 
-**ANSWER:** [fill in]
+**ANSWER:** Exp(coef) of levelSmokinglight is .86. This means that the hazard decreases by 14% when the smoking level of the patient is light compared to baseline heavy smoking level. 
 
 ## H
 We need to check the model diagnostics to verify that this model satisfies assumptions of the Cox PH model.  Uncomment and run the following code:
 
 ```{r}
-# ggcoxdiagnostics(coxMod, type = "dfbeta", linear.predictions = FALSE, ggtheme = theme_minimal())
+#checking for leverage points or outliers ("influential points"):
+ggcoxdiagnostics(coxMod, type = "dfbeta", linear.predictions = FALSE, ggtheme = theme_minimal())
 
-# ggcoxdiagnostics(coxMod, type = "deviance",  linear.predictions = FALSE, ggtheme = theme_minimal())
+ggcoxdiagnostics(coxMod, type = "deviance",  linear.predictions = FALSE, ggtheme = theme_minimal())
 ```
 
 Examine the plots.  Are there any influential points?
 
-**ANSWER:** [fill in]
+**ANSWER:** Based on the dfbeta diagnostic plots of the residuals of our model, we do see some large dfbeta values in celltypeadeno and celltypelarge, however they are not so influential that the blue and red dotted lines severely deviate from the 0 axis. 
+
+Looking at the deviance residuals, there is a pretty uniform spread of points around the 0 axis, which is good, with most of the points within 1 standard deviation from the mean. 
+
+Based on these two plots I would say there are no points of major influence. 
 
 ## I
 Run the following code to check the proportional hazards assumption:
 
 ```{r}
-#coxZPH=cox.zph(coxMod)
-#ggcoxzph(coxZPH,font.x=10,font.y=10,font.main=12)
+coxZPH=cox.zph(coxMod)
+ggcoxzph(coxZPH,font.x=10,font.y=10,font.main=12)
 ```
 
 Based on the Schoenfeld residuals, is the proportional hazards assumption satisfied?
 
-**ANSWER:** [fill in]
+**ANSWER:** Based on the  p-values p <.05 for karno and celltype the proportional hazards assumption is not satisfied. However, I will not rely exclusively on the p-value to make this determination. Among all groups, the plots do not show any pattern of residuals over time. They appear all quite random, distributed around 0. So I will say that the proportional hazards assumption is satisfied. 
 
 ## J
 Using the variable names in the dataset, create a data frame for a 60yo Black male who is a light smoker.  One row should correspond to grp="patchOnly" and the second row should correspond to the combination treatment.  (Hint: expand.grid).  Name this data frame `newData`.
 
 ```{r}
+ds
+newData = 
+  expand.grid(
+    grp= c("patchOnly","combination"),
+    age= 60, 
+    gender = "Male",
+    race= "black",
+    levelSmoking= "light",
+    ageGroup4 = "50-64")
 
 ```
 
@@ -148,11 +164,14 @@ Using the variable names in the dataset, create a data frame for a 60yo Black ma
 Uncomment and run the following code to create the survival tables for the cox PH curves:
 
 ```{r}
-# coxSurvTables=survfit(coxMod, data = veteran, newdata = newData, conf.type = "none")
+coxSurvTables=survfit(coxMod, data = ds, newdata = newData, conf.type = "none")
+surv_summary(coxSurvTables)
 ```
 
 Then use the survfit object and `ggsurvplot` to create survival curves for a 60yo Black male.  There should be a curve for each treatment (patchOnly, combination).
 
 ```{r}
-
+ggsurvplot(fit=coxSurvTables, palette=c("forestgreen","pink"),
+ggtheme=theme_minimal(), legend="right", legend.title="Treatment",
+legend.labs=c("patchOnly","Combination"), title = "Survival Curves for Smoking Cessation of 60 Year Old Black Male")
 ```
