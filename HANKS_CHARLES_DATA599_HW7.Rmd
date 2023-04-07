@@ -4,6 +4,7 @@ date: "Due: April 7, 2023"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = '/Users/charleshanks/desktop/msds/spring_23/SA/datasets')
@@ -87,17 +88,16 @@ weibullMod = survreg(Surv(ttr,relapse)~ grp + gender + race + levelSmoking + age
 Run `broom::tidy(weibullMod)` on the model.  Which variables are statistically significant?  (Hint: which variables have a p-value < 0.05?)
 
 ```{r}
-broom::tidy(weibullMod)
+broom::tidy(weibullMod) 
 ```
 
-**ANSWER:** The statistically significant variables are grp and ageGroup4. 
+**ANSWER:** The statistically significant variables are grp:pathOnly and ageGroup4:50-64. 
 
 ## E
 Run a Cox proportional hazards model with the same variables in part A using `coxph`.  Name this model `coxMod`.
 
 ```{r}
 coxMod=coxph(Surv(ttr,relapse)~grp + gender + race + levelSmoking + ageGroup4, data = ds)
- 
 ```
 
 ## F
@@ -107,7 +107,7 @@ Run `summary(coxMod)`.  What is the interpretation of the grp (i.e. treatment) c
 summary(coxMod)
 ```
 
-**ANSWER:** Exp(coef) of grp is 1.81. We should interpret this coefficient for grppatchOnly as a hazard ratio, exp(B_1). We can say that that hazard increases by a factor of 1.81 when the treatment for is patch only. In other words, the hazard increases by 81% for patch only compared to the baseline combination treatment.
+**ANSWER:** Exp(coef) of grp is 1.81. We should interpret this coefficient for grppatchOnly as a hazard ratio, exp(B_1). We can say that the hazard (of relapse) increases by a factor of 1.81 when the treatment for is patch only. In other words, the hazard increases by 81% for patch only compared to the baseline combination treatment.
 
 ## G
 What is the interpretation of the smoking level coefficient?
@@ -142,13 +142,12 @@ ggcoxzph(coxZPH,font.x=10,font.y=10,font.main=12)
 
 Based on the Schoenfeld residuals, is the proportional hazards assumption satisfied?
 
-**ANSWER:** Based on the  p-values p <.05 for karno and celltype the proportional hazards assumption is not satisfied. However, I will not rely exclusively on the p-value to make this determination. Among all groups, the plots do not show any pattern of residuals over time. They appear all quite random, distributed around 0. So I will say that the proportional hazards assumption is satisfied. 
+**ANSWER:** Based on the global Schoenfeld  p-value is > .05, and among all groups, the plots do not show any pattern of residuals over time. They appear all quite random, distributed around 0. So I will say that the proportional hazards assumption is satisfied. 
 
 ## J
 Using the variable names in the dataset, create a data frame for a 60yo Black male who is a light smoker.  One row should correspond to grp="patchOnly" and the second row should correspond to the combination treatment.  (Hint: expand.grid).  Name this data frame `newData`.
 
 ```{r}
-ds
 newData = 
   expand.grid(
     grp= c("patchOnly","combination"),
@@ -173,5 +172,5 @@ Then use the survfit object and `ggsurvplot` to create survival curves for a 60y
 ```{r}
 ggsurvplot(fit=coxSurvTables, palette=c("forestgreen","pink"),
 ggtheme=theme_minimal(), legend="right", legend.title="Treatment",
-legend.labs=c("patchOnly","Combination"), title = "Survival Curves for Smoking Cessation of 60 Year Old Black Male")
+legend.labs=c("patchOnly","Combination"), title = "Survival Curves for Smoking Cessation of 60 Year-Old Black Male")
 ```
